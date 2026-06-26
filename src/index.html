@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bombom Launcher</title>
+  <style>
+    /* Dinamik Renk Paleti (Açık/Koyu Mod Duyarlı) */
+    :root {
+      --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      --card-bg: rgba(255, 255, 255, 0.9);
+      --text-color: #2d3748;
+      --input-bg: #ffffff;
+      --input-border: #cbd5e0;
+      --primary-btn: linear-gradient(90deg, #ff4e50 0%, #f9d423 100%);
+      --btn-text: #ffffff;
+      --shadow: 0 10px 25px rgba(0,0,0,0.05);
+      --saved-bg: #edf2f7;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        --card-bg: rgba(30, 41, 59, 0.7);
+        --text-color: #f8fafc;
+        --input-bg: #0f172a;
+        --input-border: #334155;
+        --primary-btn: linear-gradient(90deg, #818cf8 0%, #c084fc 100%);
+        --btn-text: #0f172a;
+        --shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        --saved-bg: #1e293b;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+    body {
+      background: var(--bg-gradient);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: background 0.3s ease;
+    }
+
+    .launcher-container {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      padding: 40px;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    /* Form Elemanları */
+    .input-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .input-group label {
+      display: block;
+      color: var(--text-color);
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      opacity: 0.8;
+      font-weight: 600;
+    }
+    .input-group input, .input-group select {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--input-bg);
+      border: 2px solid var(--input-border);
+      border-radius: 12px;
+      color: var(--text-color);
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .input-group input:focus, .input-group select:focus {
+      border-color: #818cf8;
+      box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+    }
+
+    /* Hesap Kaydetme Checkbox */
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 8px;
+      color: var(--text-color);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .checkbox-group input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    /* Kayıtlı Hesaplar Listesi */
+    .saved-accounts-section {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .saved-accounts-title {
+      font-size: 0.85rem;
+      color: var(--text-color);
+      font-weight: 600;
+      margin-bottom: 8px;
+      opacity: 0.8;
+    }
+    .accounts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 120px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .account-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--saved-bg);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.1s ease, opacity 0.2s ease;
+    }
+    .account-item:hover {
+      opacity: 0.9;
+    }
+    .account-info {
+      color: var(--text-color);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    .btn-delete {
+      background: transparent;
+      border: none;
+      color: #ef4444;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+    .btn-delete:hover {
+      transform: scale(1.2);
+    }
+
+    /* Giriş Butonu */
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary-btn);
+      border: none;
+      border-radius: 12px;
+      color: var(--btn-text);
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: transform 0.1s ease, opacity 0.2s ease;
+    }
+    .btn-submit:hover { opacity: 0.9; }
+    .btn-submit:active { transform: scale(0.98); }
+
+    /* Durum Bildirimleri */
+    #status-msg {
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: #ef4444;
+      font-weight: 500;
+      text-align: center;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="launcher-container">
+    <!-- Kayıtlı Hesaplar Paneli -->
+    <div class="saved-accounts-section" id="saved-section" style="display: none;">
+      <div class="saved-accounts-title">Kayıtlı Hesaplar</div>
+      <div class="accounts-list" id="accounts-list"></div>
+    </div>
+
+    <!-- Giriş Formu -->
+    <form id="login-form">
+      <div class="input-group">
+        <label for="username">Kullanıcı Adı</label>
+        <input type="text" id="username" placeholder="337 kullanıcı adınız" required>
+      </div>
+
+      <div class="input-group">
+        <label for="password">Şifre</label>
+        <input type="password" id="password" placeholder="••••••••" required>
+      </div>
+
+      <div class="input-group">
+        <label for="server">Sunucu Seçimi</label>
+        <select id="server">
+          <option value="50000">Sunucu 50000 (S1)</option>
+        </select>
+      </div>
+
+      <div class="checkbox-group">
+        <input type="checkbox" id="remember-me" checked>
+        <label for="remember-me">Bu hesabı kaydet</label>
+      </div>
+
+      <button type="submit" class="btn-submit">Savaşı Başlat</button>
+    </form>
+
+    <div id="status-msg"></div>
+  </div>
+
+  <script>
+    const { invoke } = window.__TAURI__.core;
+
+    // Ortak Giriş ve Oyunu Ateşleme Fonksiyonu
+    async function handleLogin(user, pwd, server, remember) {
+      const status = document.getElementById('status-msg');
+      status.innerText = "Giriş yapılıyor, lütfen bekleyin...";
+      status.style.color = "var(--text-color)";
+
+      try {
+        const res = await invoke("launch_bombom", { user, pwd, serverId: server });
+
+        if (res.success) {
+          status.innerText = res.message;
+          status.style.color = "#10b981";
+
+          // Giriş başarılıysa ve hafızaya alma seçiliyse kaydet
+          if (remember) {
+            let accounts = JSON.parse(localStorage.getItem('bombom_accounts') || '[]');
+            accounts = accounts.filter(acc => acc.user !== user);
+            accounts.push({ user, pwd, server });
+            localStorage.setItem('bombom_accounts', JSON.stringify(accounts));
+            loadSavedAccounts();
+          }
+        } else {
+          status.innerText = res.message;
+          status.style.color = "#ef4444";
+        }
+      } catch (err) {
+        status.innerText = "Hata: " + err;
+        status.style.color = "#ef4444";
+      }
+    }
+
+    // Hafızadaki Hesapları Listeleyen Fonksiyon
+    function loadSavedAccounts() {
+      const accounts = JSON.parse(localStorage.getItem('bombom_accounts') || '[]');
+      const section = document.getElementById('saved-section');
+      const list = document.getElementById('accounts-list');
+
+      if (accounts.length === 0) {
+        section.style.display = 'none';
+        return;
+      }
+
+      section.style.display = 'block';
+      list.innerHTML = '';
+
+      accounts.forEach((acc, index) => {
+        const item = document.createElement('div');
+        item.className = 'account-item';
+
+        // TEK TIKLA HEM DOLDUR HEM DE OYUNA GİRİŞ YAP
+        item.addEventListener('click', async (e) => {
+          if (e.target.classList.contains('btn-delete') || e.target.parentElement.classList.contains('btn-delete')) return;
+
+          document.getElementById('username').value = acc.user;
+          document.getElementById('password').value = acc.pwd;
+          document.getElementById('server').value = acc.server || '50000';
+
+          // Formu doldurur doldurmaz doğrudan arka planı tetikle
+          await handleLogin(acc.user, acc.pwd, acc.server || '50000', true);
+        });
+
+        item.innerHTML = `
+          <div class="account-info">${acc.user} (S${acc.server === '50000' ? '1' : acc.server})</div>
+          <button class="btn-delete" data-index="${index}">×</button>
+        `;
+        list.appendChild(item);
+      });
+
+      // Kayıtlı Hesabı Silme İşlemi
+      document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = e.target.getAttribute('data-index');
+          let currentAccs = JSON.parse(localStorage.getItem('bombom_accounts') || '[]');
+          currentAccs.splice(idx, 1);
+          localStorage.setItem('bombom_accounts', JSON.stringify(currentAccs));
+          loadSavedAccounts();
+        });
+      });
+    }
+
+    // Manuel Form Gönderildiğinde
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const user = document.getElementById('username').value;
+      const pwd = document.getElementById('password').value;
+      const server = document.getElementById('server').value;
+      const remember = document.getElementById('remember-me').checked;
+
+      await handleLogin(user, pwd, server, remember);
+    });
+
+    // İlk açılışta listeyi kontrol et
+    loadSavedAccounts();
+  </script>
+</body>
+</html>
