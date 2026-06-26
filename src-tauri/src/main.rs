@@ -17,11 +17,10 @@ struct CommandResult {
     message: String,
 }
 
-// 5840 portuna gelen yerel trafiği uzak sunucuya tünelleyen asenkron proxy fonksiyonu
 async fn start_proxy(remote_target: String) {
     let listener = match TcpListener::bind("127.0.0.1:5840").await {
         Ok(l) => l,
-        Err(_) => return, // Port zaten kullanımdaysa veya hata oluştuysa çık
+        Err(_) => return, 
     };
     println!("[proxy] Yerel 5840 portu dinleniyor, hedef: {}", remote_target);
 
@@ -48,7 +47,7 @@ async fn launch_bombom(user: String, pwd: String, server_id: String) -> Result<C
     .build()
     .map_err(|e| format!("İstemci başlatılamadı: {}", e))?;
 
-    // 1. ADIM: Login POST İsteği
+    
     let login_url = "https://www.337.com/api.php?lang=tr";
     let login_form = [
         ("a", "1002"),
@@ -72,7 +71,7 @@ async fn launch_bombom(user: String, pwd: String, server_id: String) -> Result<C
     }
     println!("[+] Giriş başarılı!");
 
-    // 2. ADIM: Sunucu Bilgisi Çekme
+    
     println!("[*] 2. Adım: Sunucu {} bağlantısı alınıyor...", server_id);
     let server_url = format!("https://www.337.com/api.php?a=1024&serverId={}&lang=tr&is_client=1", server_id);
 
@@ -100,7 +99,7 @@ async fn launch_bombom(user: String, pwd: String, server_id: String) -> Result<C
         front_url = front_url.replace("roadclient://", "");
     }
 
-    // 3. ADIM: Nihai SWF ve Uzak Sunucu IP Çözümleme
+    
     println!("[*] 3. Adım: Oyun linki çözümleniyor...");
     let auth_res = client.get(&front_url)
     .header("Referer", "https://www.337.com/")
@@ -111,13 +110,13 @@ async fn launch_bombom(user: String, pwd: String, server_id: String) -> Result<C
     let final_url = auth_res.url().to_string();
     let mut swf_url = final_url.replace("Default.aspx", "Loading.swf");
 
-    // Uzak sunucunun adresini (IP/Domain) URL'den ayıklıyoruz
+    
     let remote_host = auth_res.url().host_str().unwrap_or("s1.bombom.337.com").to_string();
     // Bombom oyun sunucuları genelde soket için 7000-8000 arası veya direkt web portunu kullanır,
     // Biz tüneli resmi sunucunun default soket portuna (genelde 5840 veya web soketine) yönlendiriyoruz.
     let remote_target = format!("{}:5840", remote_host);
 
-    // DİKKAT: Arka planda sahte yerel sunucumuzu (Proxy) tetikliyoruz!
+    
     start_proxy(remote_target).await;
 
     let base_url = if swf_url.contains("Loading.swf") {
@@ -130,7 +129,7 @@ async fn launch_bombom(user: String, pwd: String, server_id: String) -> Result<C
         swf_url = format!("{}&config={}config.xml", swf_url, base_url);
     }
 
-    // Ruffle Emülatörünü Eski Kararlı Ayarlarla Başlatma
+    
     println!("[game] Ruffle başlatılıyor...");
     let mut cmd = Command::new("ruffle");
     cmd.env_remove("WAYLAND_DISPLAY")
